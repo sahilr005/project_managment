@@ -37,3 +37,6 @@ class TimestampMixin:
 
 class OrgScopedMixin:
     org_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True))
+
+# Import all models here so Alembic can detect them
+from app.db.models import *

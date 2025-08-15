@@ -1,0 +1,25 @@
+# Import all models here so Alembic can detect them
+from .user import User
+from .organization import Organization
+from .membership import Membership
+from .project import Project
+from .board import Board
+from .column import Column
+from .task import Task
+from .task_comment import TaskComment
+from .label import Label
+from .task_label import TaskLabel
+
+# This ensures all models are registered with SQLAlchemy metadata
+__all__ = [
+    "User",
+    "Organization", 
+    "Membership",
+    "Project",
+    "Board",
+    "Column",
+    "Task",
+    "TaskComment",
+    "Label",
+    "TaskLabel"
+]
