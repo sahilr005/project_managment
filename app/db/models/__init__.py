@@ -9,6 +9,8 @@ from .task import Task
 from .task_comment import TaskComment
 from .label import Label
 from .task_label import TaskLabel
+from .user_cred import UserCredential   # noqa: F401
+from .user_session import UserSession   # noqa: F401
 
 # This ensures all models are registered with SQLAlchemy metadata
 __all__ = [
@@ -21,5 +23,7 @@ __all__ = [
     "Task",
     "TaskComment",
     "Label",
-    "TaskLabel"
+    "TaskLabel",
+    "UserCredential",
+    "UserSession"
 ]

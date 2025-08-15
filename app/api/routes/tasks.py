@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_, or_
 from uuid import UUID
 from datetime import datetime
-from app.api.deps import db, require_org_id
+from app.api.deps import db, require_org_id,require_role
 from app.db.models.task import Task
 from app.db.models.project import Project
 from app.db.models.board import Board
@@ -14,7 +14,7 @@ from app.schemas.tasks import TaskCreate, TaskUpdate, TaskOut
 
 router = APIRouter(prefix="/v1/tasks", tags=["tasks"])
 
-@router.post("", response_model=TaskOut)
+@router.post("", response_model=TaskOut,dependencies=[Depends(require_role("owner","admin","manager","member"))])
 async def create_task(payload: TaskCreate, session: AsyncSession = Depends(db), org_id: UUID = Depends(require_org_id)):
     proj = await session.get(Project, payload.project_id)
     if not proj or proj.org_id != org_id:
@@ -101,7 +101,7 @@ async def update_task(task_id: UUID, payload: TaskUpdate, session: AsyncSession 
     await session.commit(); await session.refresh(row)
     return row
 
-@router.post("/{task_id}:move", response_model=TaskOut)
+@router.post("/{task_id}:move", response_model=TaskOut,dependencies=[Depends(require_role("owner","admin","manager","member"))])
 async def move_task(task_id: UUID, column_id: UUID, session: AsyncSession = Depends(db), org_id: UUID = Depends(require_org_id)):
     row = await session.get(Task, task_id)
     if not row or row.org_id != org_id:

@@ -3,13 +3,14 @@ from fastapi import APIRouter,Depends,HTTPException,Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select,and_
 from uuid import UUID
-from app.api.deps import db, require_org_id
+from app.api.deps import db, require_org_id,require_role
 from app.db.models.membership import Membership
 from app.db.models.user import User
 from app.schemas.memberships import MembershipCreate,MembershipOut
 
 router = APIRouter(prefix="/v1/memberships",tags=["memberships"])
 
+# ,dependencies=[Depends(require_role("owner","admin"))]
 @router.post("",response_model=MembershipOut)
 async def add_member(
     payload: MembershipCreate,
@@ -36,7 +37,7 @@ async def add_member(
     return created
     
 
-@router.get("", response_model=list[MembershipOut])
+@router.get("", response_model=list[MembershipOut],dependencies=[Depends(require_role("Admin", "owner","admin","manager","member"))])
 async def list_members(
     session: AsyncSession = Depends(db),
     org_id: UUID = Depends(require_org_id),
@@ -47,7 +48,7 @@ async def list_members(
     rows = (await session.execute(q)).scalars().all()
     return rows
 
-@router.delete("/{user_id}", status_code=204)
+@router.delete("/{user_id}", status_code=204,dependencies=[Depends(require_role("owner","admin"))])
 async def remove_member(
     user_id: UUID,
     session: AsyncSession = Depends(db),

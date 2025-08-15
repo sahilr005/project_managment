@@ -3,14 +3,14 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from uuid import UUID
-from app.api.deps import db, require_org_id
+from app.api.deps import db, require_org_id,require_role
 from app.db.models.column import Column
 from app.db.models.board import Board
 from app.schemas.columns import ColumnCreate, ColumnUpdate, ColumnOut
 
 router = APIRouter(prefix="/v1/columns", tags=["columns"])
 
-@router.post("", response_model=ColumnOut)
+@router.post("", response_model=ColumnOut,dependencies=[Depends(require_role("owner","admin","manager","member"))])
 async def create_column(payload: ColumnCreate, session: AsyncSession = Depends(db), org_id: UUID = Depends(require_org_id)):
     board = await session.get(Board, payload.board_id)
     if not board or board.org_id != org_id:
@@ -31,6 +31,7 @@ async def list_columns(
     q = q.order_by(Column.order.asc(), Column.created_at.asc())
     rows = (await session.execute(q)).scalars().all()
     return rows
+
 @router.get("/{column_id}", response_model=ColumnOut)
 async def get_column(
     column_id: UUID,
