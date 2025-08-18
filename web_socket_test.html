@@ -1,0 +1,7 @@
+<script>
+    const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI4MDVkZjdmNC0zNjgwLTQ1ZTUtOTEyMy1jYjMzYzNkZjFiZWIiLCJpYXQiOjE3NTU0OTUxMDMsImV4cCI6MTc1NTQ5NTcwMywianRpIjoiMjczMjgxYmUtZDFmNy00ZDJiLTlmYjgtMGYzYzI3ZGQzMjIwIn0.4bw10yIu9z_jVXQkcuIppBPG4kIEF4a8vUK1P0HJB0A';
+    const org = '0d5bdfca-b717-4c35-9220-57d3aa762f70';
+    const ws = new WebSocket(`ws://127.0.0.1:8000/ws?token=${encodeURIComponent('Bearer '+token)}&org_id=${org}`);
+    ws.onmessage = (e) => console.log('event', e.data);
+    </script>
+    

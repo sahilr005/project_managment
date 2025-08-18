@@ -11,6 +11,11 @@ from .label import Label
 from .task_label import TaskLabel
 from .user_cred import UserCredential   # noqa: F401
 from .user_session import UserSession   # noqa: F401
+from .notification import Notification
+from .notification_pref import NotificationPreference
+from .webhook import Webhook
+from .webhook_attempt import WebhookAttempt
+from .file import File  # noqa: F401
 
 # This ensures all models are registered with SQLAlchemy metadata
 __all__ = [
@@ -25,5 +30,10 @@ __all__ = [
     "Label",
     "TaskLabel",
     "UserCredential",
-    "UserSession"
+    "UserSession",
+    "Notification",
+    "NotificationPreference",
+    "Webhook",
+    "WebhookAttempt",
+    "File"
 ]

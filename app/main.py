@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from app.core.logging import configure_logging
 from app.core.config import settings
-from app.db.models import task,user_cred,user_session
+from app.db.models import task,user_cred,user_session,notification, notification_pref, webhook, webhook_attempt
 from app.middlewares.request_id import RequestIDMiddleware
 from app.api.routes import health
 from app.api.routes import orgs,users,memberships
@@ -12,6 +12,13 @@ from app.api.routes import tasks as tasks_router
 from app.api.routes import comments as comments_router
 from app.api.routes import labels as labels_router
 from app.api.routes import auth as auth_router
+from app.api.routes import files as files_router
+from app.api.routes import ws as ws_router
+from app.api.routes import notifications as notifications_router
+from app.api.routes import webhooks as webhooks_router
+from app.middlewares.rate_limit import RateLimitMiddleware
+
+from app.db.models import File
 
 # IMPORT models for Alembic discovery (side-effect import)
 from app.db.models import organization,user,membership,project,label,task_comment,task_label,column,task
@@ -41,7 +48,12 @@ app.include_router(comments_router.router)
 app.include_router(labels_router.router)
 app.include_router(health.router)
 app.include_router(auth_router.router)
+app.include_router(files_router.router)
+app.include_router(ws_router.router)
+app.include_router(notifications_router.router)
+app.include_router(webhooks_router.router)
 
+app.add_middleware(RateLimitMiddleware, limit=120, window_sec=60)  # 120 req/min per IP per path
 
 @app.get("/")
 async def root():

@@ -4,12 +4,15 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_, or_
 from uuid import UUID
 from datetime import datetime
+from app.ws.hub import hub, org_room
 from app.api.deps import db, require_org_id,require_role
 from app.db.models.task import Task
 from app.db.models.project import Project
 from app.db.models.board import Board
 from app.db.models.column import Column
 from app.db.models.user import User
+from app.services import notification_service, webhook_service
+
 from app.schemas.tasks import TaskCreate, TaskUpdate, TaskOut
 
 router = APIRouter(prefix="/v1/tasks", tags=["tasks"])
@@ -46,7 +49,32 @@ async def create_task(payload: TaskCreate, session: AsyncSession = Depends(db), 
         due_at=payload.due_at,
         rank=payload.rank or 0,
     )
-    session.add(row); await session.commit(); await session.refresh(row)
+    session.add(row); await session.commit(); 
+    await session.refresh(row)
+    # notify assignee (if any)
+    if row.assignee_id:
+        await notification_service.notify_user(
+            session, org_id, row.assignee_id, "task.created",
+            {"task_id": str(row.id), "title": row.title, "priority": row.priority}
+        )
+
+    # fire outgoing webhooks
+    await webhook_service.fire_event(session, org_id, "task.created", {
+        "task_id": str(row.id),
+        "project_id": str(row.project_id),
+        "title": row.title,
+        "priority": row.priority,
+    })
+    await session.commit()
+    await hub.broadcast(org_room(str(org_id)), {
+        "type": "task.created",
+        "org_id": str(org_id),
+        "task_id": str(row.id),
+        "project_id": str(row.project_id),
+        "title": row.title,
+        "status": row.status,
+        "priority": row.priority,
+    })
     return row
 
 @router.get("", response_model=list[TaskOut])
@@ -99,6 +127,13 @@ async def update_task(task_id: UUID, payload: TaskUpdate, session: AsyncSession 
     if payload.due_at is not None: row.due_at = payload.due_at
     if payload.rank is not None: row.rank = payload.rank
     await session.commit(); await session.refresh(row)
+    await hub.broadcast(org_room(str(org_id)), {
+        "type": "task.updated",
+        "org_id": str(org_id),
+        "task_id": str(row.id),
+        "status": row.status,
+        "priority": row.priority,
+    })
     return row
 
 @router.post("/{task_id}:move", response_model=TaskOut,dependencies=[Depends(require_role("owner","admin","manager","member"))])
