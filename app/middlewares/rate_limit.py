@@ -12,6 +12,9 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         self.store = defaultdict(deque)  # key -> deque[timestamps]
 
     async def dispatch(self, request: Request, call_next):
+        # Allow CORS preflight requests to pass through unthrottled
+        if request.method == "OPTIONS":
+            return await call_next(request)
         # key by (ip, path) – you can key by user id if authenticated
         ip = request.client.host if request.client else "unknown"
         key = f"{ip}:{request.url.path}"

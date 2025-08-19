@@ -32,25 +32,9 @@ app = FastAPI(
     redoc_url="/redoc",
     openapi_url="/openapi.json"
 )
-origins = [
-    "http://localhost:8080",
-    "http://127.0.0.1:8080",
-    "http://localhost:5500",   # e.g. Flutter web dev server
-    "http://127.0.0.1:5500",
-    "http://localhost:3000",   # another dev port
-    "http://127.0.0.1:3000",
-    "https://project-managment-xq0q.onrender.com",  # production
-]
+
 
 app.add_middleware(RequestIDMiddleware)
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=origins,        # list of origins, or ["*"] for all (not recommended in prod)
-    allow_credentials=True,
-    allow_methods=["*"],          # allow all HTTP methods (GET, POST, PATCH, DELETE…)
-    allow_headers=["*"],          # allow all headers (Authorization, Content-Type, etc.)
-)
 
 #routes
 app.include_router(health.router)
@@ -71,6 +55,15 @@ app.include_router(notifications_router.router)
 app.include_router(webhooks_router.router)
 
 app.add_middleware(RateLimitMiddleware, limit=120, window_sec=60)  # 120 req/min per IP per path
+
+# Keep CORS as the outermost middleware so headers are applied to all responses (incl. errors)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=False,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.get("/")
 async def root():
