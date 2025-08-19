@@ -33,24 +33,23 @@ app = FastAPI(
     openapi_url="/openapi.json"
 )
 origins = [
-      "http://localhost:8080",
-  "http://127.0.0.1:8080",
-  "http://127.0.0.1:54372",
+    "http://localhost:8080",
+    "http://127.0.0.1:8080",
     "http://localhost:5500",   # e.g. Flutter web dev server
     "http://127.0.0.1:5500",
     "http://localhost:3000",   # another dev port
     "http://127.0.0.1:3000",
-    "http://your-domain.com",  # production
+    "https://project-managment-xq0q.onrender.com",  # production
 ]
 
 app.add_middleware(RequestIDMiddleware)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:8080", "http://127.0.0.1:8080", "http://localhost:*", "http://127.0.0.1:*"],
-    allow_methods=["GET","POST","PATCH","DELETE","OPTIONS"],
-    allow_headers=["Authorization","Content-Type","X-Org-Id"],
-    allow_credentials=False
+    allow_origins=origins,        # list of origins, or ["*"] for all (not recommended in prod)
+    allow_credentials=True,
+    allow_methods=["*"],          # allow all HTTP methods (GET, POST, PATCH, DELETE…)
+    allow_headers=["*"],          # allow all headers (Authorization, Content-Type, etc.)
 )
 
 #routes

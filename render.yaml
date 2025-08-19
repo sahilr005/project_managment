@@ -1,0 +1,46 @@
+# render.yaml
+services:
+  - type: web
+    name: pm-saas-api
+    env: python
+    plan: free              # pick a paid plan if needed
+    region: oregon          # or your closest region
+    buildCommand: |
+      pip install --upgrade pip
+      pip install -r requirements.txt
+    startCommand: >
+      gunicorn app.main:app -k uvicorn.workers.UvicornWorker
+      --bind 0.0.0.0:$PORT --workers 2 --timeout 120
+    healthCheckPath: /livez
+    autoDeploy: true
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: DATABASE_URL
+        value: "postgresql+asyncpg://postgres.muvqvezwaujukqwngsrt:sahilr@5555@aws-1-eu-west-1.pooler.supabase.com:6543/postgres?sslmode=require"
+      - key: JWT_SECRET
+        generateValue: true
+      # Optional if you’re not using Redis yet; add later when needed:
+      # - key: REDIS_URL
+      #   fromService:
+      #     name: pm-redis
+      #     type: redis
+      #     property: connectionString
+    postDeployCommand: |
+      alembic upgrade head
+    disk:
+      name: uploads
+      mountPath: /opt/render/project/src/var/uploads
+      sizeGB: 2
+
+databases:
+  - name: pmdb
+    plan: free
+    region: oregon
+
+# Optional Redis (uncomment if/when you need it)
+# services:
+#   - type: redis
+#     name: pm-redis
+#     plan: free
+#     ipAllowList: []  # accessible only from Render services

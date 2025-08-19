@@ -20,10 +20,23 @@ def upgrade() -> None:
     """Upgrade schema."""
     # Enable RLS and create tenant isolation policy for files table
     op.execute("ALTER TABLE files ENABLE ROW LEVEL SECURITY;")
-    op.execute("""
-    CREATE POLICY tenant_isolation ON files
-    USING (org_id::text = current_setting('app.current_org_id', true));
-    """)
+    # Create the policy only if it doesn't already exist
+    op.execute(
+        """
+        DO $$
+        BEGIN
+            IF NOT EXISTS (
+                SELECT 1 FROM pg_policies
+                WHERE schemaname = 'public'
+                  AND tablename  = 'files'
+                  AND policyname = 'tenant_isolation'
+            ) THEN
+                EXECUTE 'CREATE POLICY tenant_isolation ON files USING (org_id::text = current_setting(''app.current_org_id'', true));';
+            END IF;
+        END
+        $$;
+        """
+    )
 
 
 def downgrade() -> None:

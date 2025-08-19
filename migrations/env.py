@@ -1,4 +1,5 @@
 import asyncio
+import os
 from logging.config import fileConfig
 
 from sqlalchemy import pool, engine_from_config
@@ -13,9 +14,19 @@ from alembic import context
 # access to the values within the .ini file in use.
 config = context.config
 
-# Convert async URL to sync URL for Alembic
-sync_url = settings.database_url.replace("postgresql+asyncpg://", "postgresql://")
-config.set_main_option("sqlalchemy.url", sync_url)
+# Prefer a dedicated migrations URL if provided, else fall back to app URL
+db_url = os.getenv("ALEMBIC_DATABASE_URL") or settings.database_url
+if db_url.startswith("postgresql+asyncpg://"):
+    sync_url = db_url.replace("postgresql+asyncpg://", "postgresql+psycopg2://", 1)
+elif db_url.startswith("postgresql://"):
+    # Assume psycopg2 by default when driver not specified
+    sync_url = db_url
+else:
+    sync_url = db_url
+
+# Escape percent signs for ConfigParser interpolation safety
+escaped_sync_url = sync_url.replace("%", "%%")
+config.set_main_option("sqlalchemy.url", escaped_sync_url)
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
@@ -48,7 +59,7 @@ def run_migrations_offline() -> None:
     """
     url = config.get_main_option("sqlalchemy.url")
     context.configure(
-        url=sync_url,
+        url=url,
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
