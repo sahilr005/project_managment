@@ -17,7 +17,7 @@ from app.api.routes import ws as ws_router
 from app.api.routes import notifications as notifications_router
 from app.api.routes import webhooks as webhooks_router
 from app.middlewares.rate_limit import RateLimitMiddleware
-
+from fastapi.middleware.cors import CORSMiddleware
 from app.db.models import File
 
 # IMPORT models for Alembic discovery (side-effect import)
@@ -32,8 +32,26 @@ app = FastAPI(
     redoc_url="/redoc",
     openapi_url="/openapi.json"
 )
+origins = [
+      "http://localhost:8080",
+  "http://127.0.0.1:8080",
+  "http://127.0.0.1:54372",
+    "http://localhost:5500",   # e.g. Flutter web dev server
+    "http://127.0.0.1:5500",
+    "http://localhost:3000",   # another dev port
+    "http://127.0.0.1:3000",
+    "http://your-domain.com",  # production
+]
 
 app.add_middleware(RequestIDMiddleware)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:8080", "http://127.0.0.1:8080", "http://localhost:*", "http://127.0.0.1:*"],
+    allow_methods=["GET","POST","PATCH","DELETE","OPTIONS"],
+    allow_headers=["Authorization","Content-Type","X-Org-Id"],
+    allow_credentials=False
+)
 
 #routes
 app.include_router(health.router)
